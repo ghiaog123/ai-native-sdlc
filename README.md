@@ -37,20 +37,48 @@ Two subagents serve it: `sdlc-reviewer` runs the `REVIEW.md` passes in Stage 5, 
 
 ## Install
 
-Add the repository as a Claude Code marketplace and install the plugin:
+From a local clone — the marketplace source can be any directory containing
+`.claude-plugin/marketplace.json`, so a path works exactly like a GitHub slug:
+
+```text
+/plugin marketplace add /absolute/path/to/ai-native-sdlc
+/plugin install ai-sdlc@ai-native-sdlc
+```
+
+From GitHub:
 
 ```text
 /plugin marketplace add hieuvu7/ai-native-sdlc
 /plugin install ai-sdlc@ai-native-sdlc
 ```
 
-Or load it directly from a clone while developing:
+`ai-sdlc` is the plugin; `ai-native-sdlc` is the marketplace it comes from. After a
+local install, `/plugin marketplace update ai-native-sdlc` picks up your edits.
 
-```sh
-git clone https://github.com/hieuvu7/ai-native-sdlc.git
-cd ai-native-sdlc
-claude --plugin-dir ./plugins/ai-sdlc
-```
+Read the next section before you install — this plugin registers hooks.
+
+## What installing this changes on your machine
+
+Read this before installing. This plugin ships hooks, and hooks run automatically.
+
+Once the plugin is enabled, four hooks are registered for every Claude Code session:
+
+| Hook | Fires | Does |
+| --- | --- | --- |
+| `artifact-gate.sh` | before every `Write` / `Edit` | Blocks a source-code write when the change has no accepted `plan.md` listing that file |
+| `prod-guard.sh` | before every `Bash` | Blocks commands that look like a production deploy or teardown |
+| `session-context.sh` | at session start | Prints the current stage and pending gate |
+| `prompt-nudge.sh` | on every message you send | Prints one line naming the pending gate |
+
+**Every one of them exits silently and immediately in a repository that has no `.sdlc/` directory.** That is the opt-in switch, and it is verified behavior, not an intention: installing this plugin does not change how Claude Code behaves in any repository where you have not run `/ai-sdlc-init`.
+
+In a repository that has opted in, expect the gates to actually stop you. That is the point, and there are three escape hatches:
+
+- `.sdlc/OPTOUT` — silences every hook for that repository, permanently, no other change needed.
+- `AI_SDLC_ALLOW_PROD=1` — authorizes one production command after a human has approved it.
+- `/plugin uninstall ai-sdlc` — removes the hooks entirely.
+
+Each block message names the rule that matched and the escape hatch, so a blocked action is never a mystery.
 
 ## Quickstart
 
