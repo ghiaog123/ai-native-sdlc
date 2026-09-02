@@ -37,23 +37,36 @@ Two subagents serve it: `sdlc-reviewer` runs the `REVIEW.md` passes in Stage 5, 
 
 ## Install
 
-From a local clone — the marketplace source can be any directory containing
-`.claude-plugin/marketplace.json`, so a path works exactly like a GitHub slug:
+A marketplace source can be a GitHub repo, a URL, or a local path, so a clone installs
+the same way a published repo does.
 
-```text
-/plugin marketplace add /absolute/path/to/ai-native-sdlc
-/plugin install ai-sdlc@ai-native-sdlc
+From the terminal — works everywhere, including surfaces where the `/plugin` dialog is
+unavailable:
+
+```bash
+claude plugin marketplace add /absolute/path/to/ai-native-sdlc
 ```
 
-From GitHub:
+```bash
+claude plugin install ai-sdlc@ai-native-sdlc --scope user
+```
+
+From inside an interactive Claude Code session:
 
 ```text
 /plugin marketplace add hieuvu7/ai-native-sdlc
 /plugin install ai-sdlc@ai-native-sdlc
 ```
 
-`ai-sdlc` is the plugin; `ai-native-sdlc` is the marketplace it comes from. After a
-local install, `/plugin marketplace update ai-native-sdlc` picks up your edits.
+To try it for one session only, without installing anything:
+
+```bash
+claude --plugin-dir /absolute/path/to/ai-native-sdlc/plugins/ai-sdlc
+```
+
+`ai-sdlc` is the plugin; `ai-native-sdlc` is the marketplace it comes from. Installs are
+stored under `~/.claude/plugins/`, shared by the CLI and the desktop app, so installing
+once covers both. Pull in later edits with `claude plugin marketplace update ai-native-sdlc`.
 
 Read the next section before you install — this plugin registers hooks.
 
