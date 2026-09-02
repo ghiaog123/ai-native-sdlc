@@ -83,7 +83,7 @@ Skill auto-triggering is probabilistic. Persistence here does not rely on it —
 
 | Layer | Mechanism | Holds even if the model "forgets"? |
 | --- | --- | --- |
-| Enforcement | `PreToolUse` hooks block source writes with no accepted `plan.md`, and production commands without authorization | Yes |
+| Enforcement | `PreToolUse` hooks block source writes with no accepted `plan.md`, and catch common production commands | Yes |
 | Restoration | `SessionStart` re-injects the loop state at the start of every session | Yes |
 | Nudge | `UserPromptSubmit` adds one line naming the current stage and pending gate | Yes |
 | Memory | `/ai-sdlc-init` writes an idempotent block into the project's `CLAUDE.md` | Yes |
@@ -99,7 +99,7 @@ Stage state is **derived**, never stored — it is computed from which artifacts
 | Covers Plan → Build | Yes | Yes | Yes | Yes |
 | Covers Test, Deploy, Maintain | Yes | No | Partial | No |
 | Human gate enforced by hooks | Yes | No | No | No |
-| Production command guard | Yes | No | No | No |
+| Production command guard | Best-effort | No | No | No |
 | Control-band monitoring that files the next intent | Yes | No | No | No |
 | Agent-configuration evals | Yes | No | No | No |
 | Multi-agent tool support | Claude Code | 30+ agents | Model-agnostic | Model-agnostic |
@@ -114,7 +114,9 @@ Every stage produces one Markdown artifact that is committed to git and accepted
 
 ### Does this let an AI agent deploy to production?
 
-No. The `sdlc-deploy` skill is explicitly forbidden from merging or deploying, and `prod-guard.sh` blocks production commands at the tool layer until a human authorizes them. Stage 6 proposes fixes through a pull request; it never applies one.
+No. The `sdlc-deploy` skill is explicitly forbidden from merging or deploying, and Stage 6 proposes fixes through a pull request rather than applying one.
+
+`prod-guard.sh` adds a second, weaker line: it catches the common shapes of deploy and teardown commands and requires explicit human authorization. Be clear about what that is worth — it is a speed bump, not a security boundary. A caller who spells a deploy differently will get past any regex. IAM permissions, deployment approvals, and branch protection remain the real controls, and this hook is not a reason to relax them.
 
 ### How is this different from spec-driven development?
 
