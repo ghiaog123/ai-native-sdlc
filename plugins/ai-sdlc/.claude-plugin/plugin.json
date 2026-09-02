@@ -1,9 +1,28 @@
 {
   "name": "ai-sdlc",
-  "displayName": "AI-Native SDLC",
+  "displayName": "AI-Native SDLC — Anthropic Playbook",
   "description": "The six-stage AI-native software development lifecycle from Anthropic's playbook, as an executable Claude Code plugin. Each stage produces one version-controlled Markdown artifact and stops at a human gate: Plan writes intent.md (problem, outcome, constraints, open questions), Design turns an accepted intent into spec.md under org skills, Build turns an accepted spec into plan.md then implements it, Test proves the change and regression-tests the agent config itself with evals, Deploy runs the REVIEW.md passes (bugs, security, compliance) on the PR and enforces approval gates via hooks, Maintain watches bands.yaml control bands and files the next intent.md when a band breaks. Ships 6 stage skills, /ai-sdlc-init and /ai-sdlc-status commands, a PR reviewer and a control-band diagnostician subagent, artifact-gate and prod-guard hooks, and templates for intent.md, spec.md, plan.md, CLAUDE.md, REVIEW.md and bands.yaml.",
-  "author": { "name": "Hieuvu7" },
+  "author": {
+    "name": "Hieuvu7"
+  },
   "license": "MIT",
   "homepage": "https://github.com/hieuvu7/ai-native-sdlc",
-  "keywords": ["sdlc", "ai-native", "intent-driven", "spec-driven", "intent.md", "spec.md", "plan.md", "REVIEW.md", "bands.yaml", "governance", "approval-gates", "hooks", "evals", "code-review", "control-bands", "anthropic-playbook"]
+  "keywords": [
+    "sdlc",
+    "ai-native",
+    "intent-driven",
+    "spec-driven",
+    "intent.md",
+    "spec.md",
+    "plan.md",
+    "REVIEW.md",
+    "bands.yaml",
+    "governance",
+    "approval-gates",
+    "hooks",
+    "evals",
+    "code-review",
+    "control-bands",
+    "anthropic-playbook"
+  ]
 }

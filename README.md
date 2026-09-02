@@ -1,4 +1,4 @@
-# AI-Native SDLC
+# AI-Native SDLC — Anthropic Playbook
 
 **An AI-native software development lifecycle you can actually run** — six stages, one committed Markdown artifact per stage, and a human approval gate at every handoff. Packaged as a [Claude Code](https://claude.com/product/claude-code) plugin, this repository turns [Anthropic's AI-Native SDLC playbook](https://claude.com/blog/the-ai-native-sdlc-playbook) into something a team installs, not just something they read.
 
@@ -9,6 +9,10 @@
 ![The AI-native SDLC loop: Plan writes intent.md, Design writes spec.md, Build writes plan.md, Test produces tests and evals, Deploy runs REVIEW.md, Maintain watches bands.yaml, and a control-band breach files the next intent.md to restart the loop. A human gate separates every stage.](docs/loop.svg)
 
 Agents generate, investigate, implement, and verify. Humans approve the decisions that need judgment. Git records who asked, what the agent produced, and who approved it.
+
+> The name describes the method this implements — Anthropic's AI-Native SDLC playbook.
+> This is an independent community implementation, not an Anthropic product, and is
+> neither affiliated with nor endorsed by Anthropic.
 
 ---
 
