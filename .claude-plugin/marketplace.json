@@ -1,0 +1,14 @@
+{
+  "name": "ai-native-sdlc",
+  "owner": { "name": "Hieuvu7" },
+  "description": "Anthropic's AI-Native SDLC playbook, implemented: a written playbook under docs/ plus the ai-sdlc Claude Code plugin that drives Plan → Design → Build → Test → Deploy → Maintain as version-controlled Markdown artifacts with a human gate at every handoff.",
+  "plugins": [
+    {
+      "name": "ai-sdlc",
+      "source": "./plugins/ai-sdlc",
+      "description": "Six-stage AI-native SDLC as skills, commands, subagents and hooks: intent.md → spec.md → plan.md → PR → production → control bands → next intent.md.",
+      "license": "MIT",
+      "keywords": ["sdlc", "ai-native", "intent-driven", "governance", "approval-gates", "control-bands", "code-review"]
+    }
+  ]
+}
