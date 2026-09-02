@@ -1,31 +1,50 @@
 # AI-Native SDLC
 
-This repository turns [Anthropic's AI-Native SDLC playbook](https://claude.com/blog/the-ai-native-sdlc-playbook) into a repository-native operating model and a Claude Code plugin.
+**An AI-native software development lifecycle you can actually run** — six stages, one committed Markdown artifact per stage, and a human approval gate at every handoff. Packaged as a [Claude Code](https://claude.com/product/claude-code) plugin, this repository turns [Anthropic's AI-Native SDLC playbook](https://claude.com/blog/the-ai-native-sdlc-playbook) into something a team installs, not just something they read.
 
-Code generation is no longer the only constraint on delivery. Planning, policy application, verification, review, release authorization, and production learning must also run at agent speed without giving agents authority that belongs to people. This project makes every handoff explicit, version controlled, and reviewable.
+[![License: MIT](https://img.shields.io/badge/License-MIT-black.svg)](LICENSE)
+![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-black)
+![Stages](https://img.shields.io/badge/stages-6-black)
 
-The operating rule is simple: agents generate, investigate, implement, and verify; humans approve decisions that require judgment. Each accepted artifact starts the next stage, and Git records the request, result, and approval.
+![The AI-native SDLC loop: Plan writes intent.md, Design writes spec.md, Build writes plan.md, Test produces tests and evals, Deploy runs REVIEW.md, Maintain watches bands.yaml, and a control-band breach files the next intent.md to restart the loop. A human gate separates every stage.](docs/loop.svg)
 
-## The six-stage loop
+Agents generate, investigate, implement, and verify. Humans approve the decisions that need judgment. Git records who asked, what the agent produced, and who approved it.
+
+---
+
+## What is an AI-native SDLC?
+
+An AI-native SDLC is a software development lifecycle designed around the fact that **code generation is no longer the bottleneck**. When an agent can implement a well-specified change in minutes, the constraint moves to the steps on either side of Build: deciding what to build, applying policy, verifying the result, reviewing it, authorizing release, and learning from production.
+
+Traditional SDLC models move work between roles — analyst to designer to engineer to QA to ops. An AI-native SDLC replaces those role handoffs with an **artifact loop**. Each stage emits one version-controlled, human-readable, machine-executable Markdown file, committed beside the application code. The human does not write the artifact; the human **accepts** it. The repository becomes the audit trail.
+
+This is sometimes called agentic SDLC, AI-driven SDLC, or spec-driven development. The distinguishing property here is not the Markdown — it is that **every handoff stops at a gate an agent cannot open by itself**.
+
+## The six stages
 
 | Stage | Skill that drives it | Purpose | Committed artifact | Human gate |
 | --- | --- | --- | --- | --- |
-| Plan | `sdlc-plan` | Capture the originator's problem, outcome, and constraints | `.sdlc/<slug>/intent.md` | Product owner accepts the intent |
-| Design | `sdlc-design` | Turn accepted intent into requirements and a policy-aware design | `.sdlc/<slug>/spec.md` | Product owner approves; technical owner joins for high risk |
-| Build | `sdlc-build` | Agree the implementation route before changing code | `.sdlc/<slug>/plan.md`, then code and tests | Engineer approves the plan |
-| Test | `sdlc-test` | Produce deterministic evidence and regress the agent configuration | Test output, eval results, and PR checks | Required checks pass; code owner assesses residual risk |
-| Deploy | `sdlc-deploy` | Review consistently and stop at the production boundary | PR, review findings, and release record | Code owner and named release authority approve |
-| Maintain | `sdlc-maintain` | Detect drift, diagnose it, and feed learning back into Plan | Incident record or new `.sdlc/<slug>/intent.md` | Service owner triages the finding |
+| **1. Plan** | `sdlc-plan` | Capture the originator's problem, outcome, and constraints | `.sdlc/<slug>/intent.md` | Product owner accepts the intent |
+| **2. Design** | `sdlc-design` | Turn accepted intent into requirements and a policy-aware design | `.sdlc/<slug>/spec.md` | Reviewer accepts scope and flagged concerns |
+| **3. Build** | `sdlc-build` | Agree the implementation route before changing code | `.sdlc/<slug>/plan.md`, then code | Engineer accepts the plan |
+| **4. Test** | `sdlc-test` | Produce deterministic evidence and regression-test the agent configuration | Test output, eval results, PR checks | Checks pass; owner assesses residual risk |
+| **5. Deploy** | `sdlc-deploy` | Review consistently and stop at the production boundary | PR, review findings, release record | Code owner and release authority approve |
+| **6. Maintain** | `sdlc-maintain` | Detect drift, diagnose it, feed learning back into Plan | Incident record or a new `intent.md` | Service owner triages the finding |
 
-Two subagents serve the loop: `sdlc-reviewer` runs the `REVIEW.md` passes in Stage 5,
-and `sdlc-diagnostician` turns a Stage 6 control-band breach into a draft `intent.md`.
+Stage 6 feeds Stage 1. That is the loop.
 
-You do not invoke the skills by name. Describe the work and the matching stage skill loads
-itself; the hooks keep the loop asserted from then on.
+Two subagents serve it: `sdlc-reviewer` runs the `REVIEW.md` passes in Stage 5, and `sdlc-diagnostician` turns a control-band breach into a draft `intent.md` in Stage 6.
 
 ## Install
 
-Clone the repository and load the plugin directly while developing it:
+Add the repository as a Claude Code marketplace and install the plugin:
+
+```text
+/plugin marketplace add hieuvu7/ai-native-sdlc
+/plugin install ai-sdlc@ai-native-sdlc
+```
+
+Or load it directly from a clone while developing:
 
 ```sh
 git clone https://github.com/hieuvu7/ai-native-sdlc.git
@@ -33,20 +52,15 @@ cd ai-native-sdlc
 claude --plugin-dir ./plugins/ai-sdlc
 ```
 
-Or add the repository as a Claude Code marketplace and install the plugin:
-
-```text
-/plugin marketplace add hieuvu7/ai-native-sdlc
-/plugin install ai-sdlc@ai-native-sdlc
-```
-
 ## Quickstart
 
-From the target repository, initialize the workflow:
+From the repository you want to run the lifecycle in:
 
 ```text
 /ai-sdlc-init
 ```
+
+This scaffolds `.sdlc/`, writes a real `CLAUDE.md` for that project by inspecting its build, test, and lint commands, and copies the `REVIEW.md` and `bands.yaml` policy templates.
 
 Then just describe the problem. No workflow keyword is needed; `sdlc-plan` picks it up:
 
@@ -55,9 +69,9 @@ Customers keep calling support to ask where their claim is.
 We should show them the status themselves.
 ```
 
-The workflow creates `.sdlc/<slug>/`, writes `intent.md`, and pauses. After acceptance it writes `spec.md`, then `plan.md`, then implements and verifies the change. It never treats its own output as human approval.
+The loop writes `.sdlc/<slug>/intent.md` and pauses for acceptance. After you accept, it writes `spec.md`, then `plan.md`, then implements and verifies the change — stopping at every gate. It never treats its own output as human approval.
 
-Check the current artifact and next gate at any time:
+Check where any change sits at any time:
 
 ```text
 /ai-sdlc-status
@@ -65,10 +79,62 @@ Check the current artifact and next gate at any time:
 
 ## Stays on after install
 
-- `/ai-sdlc-init` creates `.sdlc/`; its presence is the workflow's ON switch.
-- `.sdlc/OPTOUT` is the OFF switch.
-- Plugin hooks stay inert in repositories without `.sdlc/`.
-- Activation is one-time; no re-prompting is needed in later sessions.
+Skill auto-triggering is probabilistic. Persistence here does not rely on it — four layers keep the lifecycle asserted, strongest first:
+
+| Layer | Mechanism | Holds even if the model "forgets"? |
+| --- | --- | --- |
+| Enforcement | `PreToolUse` hooks block source writes with no accepted `plan.md`, and production commands without authorization | Yes |
+| Restoration | `SessionStart` re-injects the loop state at the start of every session | Yes |
+| Nudge | `UserPromptSubmit` adds one line naming the current stage and pending gate | Yes |
+| Memory | `/ai-sdlc-init` writes an idempotent block into the project's `CLAUDE.md` | Yes |
+
+The ON switch is a single directory. `/ai-sdlc-init` creates `.sdlc/`, and that one act enables the lifecycle permanently for that repository. Every hook exits silently in repositories without it, so installing this plugin cannot change behavior in unrelated projects. `.sdlc/OPTOUT` is the OFF switch.
+
+Stage state is **derived**, never stored — it is computed from which artifacts exist and what git says about them, so there is no state file to go stale.
+
+## How it compares
+
+| | This repository | [GitHub Spec Kit](https://github.com/github/spec-kit) | BMAD-METHOD | OpenSpec |
+| --- | --- | --- | --- | --- |
+| Covers Plan → Build | Yes | Yes | Yes | Yes |
+| Covers Test, Deploy, Maintain | Yes | No | Partial | No |
+| Human gate enforced by hooks | Yes | No | No | No |
+| Production command guard | Yes | No | No | No |
+| Control-band monitoring that files the next intent | Yes | No | No | No |
+| Agent-configuration evals | Yes | No | No | No |
+| Multi-agent tool support | Claude Code | 30+ agents | Model-agnostic | Model-agnostic |
+
+Spec-driven development tools are mature for the front half of the lifecycle. This repository exists because the back half — verification, review policy, release authorization, and production feedback — is where the playbook's real claims live, and it is the part almost nothing implements.
+
+## FAQ
+
+### What does AI-native SDLC mean in practice?
+
+Every stage produces one Markdown artifact that is committed to git and accepted by a named human before the next stage starts. `intent.md` → `spec.md` → `plan.md` → PR → production → band breach → the next `intent.md`.
+
+### Does this let an AI agent deploy to production?
+
+No. The `sdlc-deploy` skill is explicitly forbidden from merging or deploying, and `prod-guard.sh` blocks production commands at the tool layer until a human authorizes them. Stage 6 proposes fixes through a pull request; it never applies one.
+
+### How is this different from spec-driven development?
+
+Spec-driven development covers writing a spec and planning from it. This covers the full lifecycle including verification evidence, a review policy the agent must obey, release authorization, and monitoring that files the next intent when a service drifts.
+
+### What are evals here, and why do they matter?
+
+Evals are regression tests for the **agent configuration** rather than the code. When `CLAUDE.md`, a skill, or a hook changes, the eval suite re-runs — because a configuration change can silently degrade agent behavior with no failing unit test to show for it.
+
+### Will installing this plugin affect my other repositories?
+
+No. Every hook checks for a `.sdlc/` directory first and exits silently without one. This is verified behavior, not an intention.
+
+### Does it work with agents other than Claude Code?
+
+The methodology in [`docs/PLAYBOOK.md`](docs/PLAYBOOK.md) is tool-neutral and the artifact templates are plain Markdown. The plugin packaging — skills, hooks, subagents — is Claude Code specific.
+
+### Can I use my existing Jira or ServiceNow workflow?
+
+Yes. Those can remain the system of record as long as commits link both ways. The artifacts are the decision trail, not a replacement tracker.
 
 ## Repository map
 
@@ -76,34 +142,42 @@ Check the current artifact and next gate at any time:
 .
 ├── README.md
 ├── docs/
+│   ├── loop.svg          # The six-stage loop diagram
 │   ├── PLAYBOOK.md       # Stage-by-stage operating model and artifact contract
 │   ├── GOVERNANCE.md     # Enforceable controls and threat model
-│   ├── METRICS.md        # Process health signals and computations
+│   ├── METRICS.md        # Process health signals and how to compute them
 │   └── ADOPTION.md       # Three-phase rollout
+├── examples/rate-limit/  # One change walked through all six stages
 ├── plugins/ai-sdlc/
 │   ├── .claude-plugin/   # Plugin manifest
-│   ├── commands/         # Initialization and status commands
-│   ├── skills/           # Executable stage procedures
-│   ├── agents/           # Bounded reviewers and diagnosticians
-│   ├── hooks/            # Artifact and production gates
-│   └── templates/        # Artifact and policy templates
+│   ├── skills/           # Six executable stage procedures
+│   ├── commands/         # /ai-sdlc-init and /ai-sdlc-status
+│   ├── agents/           # sdlc-reviewer, sdlc-diagnostician
+│   ├── hooks/            # Artifact gate, production guard, state, session context
+│   └── templates/        # intent, spec, plan, CLAUDE, REVIEW, bands, settings
 └── .claude-plugin/       # Marketplace catalog
 ```
 
 ## Documentation
 
-- [Playbook](docs/PLAYBOOK.md): the thesis, loop, artifact templates, ownership, and gates.
-- [Governance](docs/GOVERNANCE.md): controls that make policy executable.
-- [Metrics](docs/METRICS.md): leading and lagging process indicators.
-- [Adoption](docs/ADOPTION.md): a safe rollout from one volunteer to the organization.
+- [**Playbook**](docs/PLAYBOOK.md) — the thesis, the loop, artifact templates, ownership, and gates.
+- [**Governance**](docs/GOVERNANCE.md) — the controls that make policy executable, and the threat model behind them.
+- [**Metrics**](docs/METRICS.md) — leading and lagging indicators, how to compute them, and how each gets gamed.
+- [**Adoption**](docs/ADOPTION.md) — a rollout from one volunteer to the organization, and the failure modes on the way.
 
 ## What this is not
 
-- It is not permission for an agent to merge, approve, or deploy its own work.
-- It is not a replacement for product judgment, code ownership, incident command, or regulatory accountability.
-- It is not a new system of record forced on every team; existing Jira, ServiceNow, design, and change-management systems can remain authoritative when commits link both ways.
-- It is not a promise that Markdown makes weak requirements good. Artifacts are useful only when reviewers reject ambiguity.
-- It is not a scorecard for ranking developers by agent usage, output, or speed.
-- It is not a reason to remove deterministic tests, static analysis, branch protection, sandboxing, or rollback practice.
+- Not permission for an agent to merge, approve, or deploy its own work.
+- Not a replacement for product judgment, code ownership, incident command, or regulatory accountability.
+- Not a new system of record forced on every team.
+- Not a promise that Markdown makes weak requirements good — artifacts help only when reviewers reject ambiguity.
+- Not a scorecard for ranking developers by agent usage, output, or speed.
+- Not a reason to remove deterministic tests, static analysis, branch protection, sandboxing, or rollback practice.
 
 Start with the artifacts, prove that the gates improve decisions, and automate only the paths the team can explain and audit.
+
+## Credits
+
+Method: [The AI-Native SDLC playbook](https://claude.com/blog/the-ai-native-sdlc-playbook), Anthropic Applied AI. This repository is an independent implementation and is not affiliated with or endorsed by Anthropic.
+
+Licensed under the [MIT License](LICENSE).

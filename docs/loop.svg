@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 460" width="1280" height="460" role="img" aria-labelledby="t d">
+  <title id="t">The AI-Native SDLC loop</title>
+  <desc id="d">Six stages — Plan, Design, Build, Test, Deploy, Maintain — each committing one artifact (intent.md, spec.md, plan.md, tests and evals, REVIEW.md, bands.yaml) and separated by a human gate. A control-band breach in Maintain files the next intent.md and restarts the loop at Plan.</desc>
+
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#4d5b6e"/>
+    </marker>
+    <marker id="au" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#5b6b80"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1280" height="460" rx="16" fill="#0f141a"/>
+  <rect x="0.5" y="0.5" width="1279" height="459" rx="16" fill="none" stroke="#232d3a"/>
+
+  <g font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+
+    <text x="48" y="54" font-size="21" font-weight="600" fill="#e6edf3">The AI-Native SDLC loop</text>
+    <text x="48" y="80" font-size="13.5" fill="#7d8b9c">Six stages. One committed artifact each. A human gate at every handoff.</text>
+
+    <!-- gate labels -->
+    <g font-size="10.5" fill="#e0a944" text-anchor="middle" letter-spacing="0.2">
+      <text x="232" y="124">PO accepts intent</text>
+      <text x="436" y="124">reviewer accepts spec</text>
+      <text x="640" y="124">engineer accepts plan</text>
+      <text x="844" y="124">checks pass</text>
+      <text x="1048" y="124">human approves merge</text>
+    </g>
+
+    <!-- arrows + gate diamonds -->
+    <g stroke="#4d5b6e" stroke-width="1.4" fill="none" marker-end="url(#a)">
+      <path d="M216 194 H 244"/>
+      <path d="M420 194 H 448"/>
+      <path d="M624 194 H 652"/>
+      <path d="M828 194 H 856"/>
+      <path d="M1032 194 H 1060"/>
+    </g>
+    <g fill="#0f141a" stroke="#e0a944" stroke-width="1.5">
+      <rect x="226" y="188" width="12" height="12" transform="rotate(45 232 194)"/>
+      <rect x="430" y="188" width="12" height="12" transform="rotate(45 436 194)"/>
+      <rect x="634" y="188" width="12" height="12" transform="rotate(45 640 194)"/>
+      <rect x="838" y="188" width="12" height="12" transform="rotate(45 844 194)"/>
+      <rect x="1042" y="188" width="12" height="12" transform="rotate(45 1048 194)"/>
+    </g>
+
+    <!-- stage cards -->
+    <g>
+      <rect x="48" y="138" width="164" height="112" rx="10" fill="#171e27" stroke="#2a3542"/>
+      <rect x="252" y="138" width="164" height="112" rx="10" fill="#171e27" stroke="#2a3542"/>
+      <rect x="456" y="138" width="164" height="112" rx="10" fill="#171e27" stroke="#2a3542"/>
+      <rect x="660" y="138" width="164" height="112" rx="10" fill="#171e27" stroke="#2a3542"/>
+      <rect x="864" y="138" width="164" height="112" rx="10" fill="#171e27" stroke="#2a3542"/>
+      <rect x="1068" y="138" width="164" height="112" rx="10" fill="#171e27" stroke="#2a3542"/>
+    </g>
+
+    <g text-anchor="middle">
+      <g font-size="10.5" fill="#5f6e80" letter-spacing="1.4">
+        <text x="130" y="164">01</text>
+        <text x="334" y="164">02</text>
+        <text x="538" y="164">03</text>
+        <text x="742" y="164">04</text>
+        <text x="946" y="164">05</text>
+        <text x="1150" y="164">06</text>
+      </g>
+      <g font-size="18" font-weight="600" fill="#e6edf3">
+        <text x="130" y="194">Plan</text>
+        <text x="334" y="194">Design</text>
+        <text x="538" y="194">Build</text>
+        <text x="742" y="194">Test</text>
+        <text x="946" y="194">Deploy</text>
+        <text x="1150" y="194">Maintain</text>
+      </g>
+      <g stroke="#2a3542" stroke-width="1">
+        <path d="M96 210 H 164"/>
+        <path d="M300 210 H 368"/>
+        <path d="M504 210 H 572"/>
+        <path d="M708 210 H 776"/>
+        <path d="M912 210 H 980"/>
+        <path d="M1116 210 H 1184"/>
+      </g>
+      <g font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace" font-size="12" fill="#6fe3c4">
+        <text x="130" y="233">intent.md</text>
+        <text x="334" y="233">spec.md</text>
+        <text x="538" y="233">plan.md</text>
+        <text x="742" y="233">tests + evals</text>
+        <text x="946" y="233">REVIEW.md</text>
+        <text x="1150" y="233">bands.yaml</text>
+      </g>
+    </g>
+
+    <!-- feedback arc: Maintain back to Plan -->
+    <path d="M1150 250 V 326 Q 1150 350 1126 350 H 154 Q 130 350 130 326 V 258"
+          fill="none" stroke="#5b6b80" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#au)"/>
+    <rect x="470" y="337" width="340" height="26" rx="6" fill="#0f141a"/>
+    <text x="640" y="355" font-size="12" fill="#8b97a8" text-anchor="middle">a band breach files the next intent.md</text>
+
+    <!-- legend -->
+    <g font-size="11.5" fill="#7d8b9c">
+      <rect x="48" y="412" width="9" height="9" rx="2" fill="#6fe3c4"/>
+      <text x="66" y="421">artifact committed to git</text>
+
+      <rect x="248" y="411.5" width="10" height="10" transform="rotate(45 253 416.5)" fill="#0f141a" stroke="#e0a944" stroke-width="1.5"/>
+      <text x="270" y="421">human gate — the agent stops and asks, it never self-approves</text>
+
+      <path d="M760 416 H 786" stroke="#5b6b80" stroke-width="1.4" stroke-dasharray="5 4"/>
+      <text x="796" y="421">production feedback restarts the loop</text>
+    </g>
+
+  </g>
+</svg>
