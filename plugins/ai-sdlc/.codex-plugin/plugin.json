@@ -6,8 +6,8 @@
     "name": "Hieuvu7"
   },
   "license": "MIT",
-  "homepage": "https://github.com/hieuvu7/ai-native-sdlc",
-  "repository": "https://github.com/hieuvu7/ai-native-sdlc",
+  "homepage": "https://github.com/ghiaog123/ai-native-sdlc",
+  "repository": "https://github.com/ghiaog123/ai-native-sdlc",
   "keywords": [
     "sdlc",
     "ai-native",
@@ -31,7 +31,7 @@
       "Read",
       "Interactive"
     ],
-    "websiteURL": "https://github.com/hieuvu7/ai-native-sdlc",
+    "websiteURL": "https://github.com/ghiaog123/ai-native-sdlc",
     "defaultPrompt": [
       "Initialize the AI-native SDLC loop in this repository",
       "Where does each in-flight change sit in the SDLC loop?",
