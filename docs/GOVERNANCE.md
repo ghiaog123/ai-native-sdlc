@@ -508,11 +508,34 @@ Installing a workflow is not enough. The loop must survive new sessions, context
    These two are not equally strong, and conflating them is dangerous. The artifact gate is a real boundary: it reasons about repository state the agent cannot fake, so it either holds or fails closed. The production guard is pattern matching over a command string, which means it is defense in depth and nothing more — it raises the cost of an unreviewed deploy and creates an audit signal, but a determined or merely creative caller gets past it. Never let its presence justify loosening IAM scopes, deployment approvals, or branch protection, which are the controls that actually enforce this boundary. Measure it by how often it catches an honest mistake, not by whether it could stop an adversary.
 2. **The `SessionStart` hook restores the operating state.** At the start of each session it re-injects a concise loop briefing with the applicable stage skills and pending gates. It exists because a fresh context cannot be assumed to remember the active stage. Like the tool gates, it is automatic and has no per-message cost.
 3. **The `UserPromptSubmit` hook supplies the nudge.** While work is in flight, it adds one line naming the current stage and gate on each turn; when nothing is in flight, it is silent. This is the only layer paid on every message, so the trade-off is explicit: keep the line minimal and silent by default.
-4. **The `CLAUDE.md` block provides durable memory.** Initialization appends the block, and Claude loads it independently in every session. It preserves the repository's loop contract even when hook context is unavailable, at the cost of a small amount of persistent session context.
+4. **The project-memory block provides durable memory.** Initialization appends the block to `CLAUDE.md` for Claude Code and `AGENTS.md` for Codex — from one template, so the two cannot drift — and the harness loads it independently in every session. It preserves the repository's loop contract even when hook context is unavailable, at the cost of a small amount of persistent session context.
 
 The first layer enforces; the middle layers restore and nudge; the last remembers. Together they keep safety-critical checks deterministic while using the smallest practical amount of recurring context.
 
 The predictable failure mode is well-intentioned cleanup: a team disables noisy hooks believing it is improving the experience, and the loop quietly dies. Keep nudges minimal, make every gate actionable, and provide `.sdlc/OPTOUT` as a legitimate escape hatch so teams opt out honestly instead of dismantling controls piecemeal.
+
+## Harness differences
+
+The four persistence layers are not equally available on every harness, and pretending
+otherwise is how a team ends up believing a gate is enforcing when it is only advising.
+
+| Layer | Claude Code | Codex |
+| --- | --- | --- |
+| `PreToolUse` enforcement | Active as soon as the plugin is enabled | Requires a one-time hook-trust grant, obtainable only in the interactive Codex TUI |
+| `SessionStart` / `UserPromptSubmit` context | Active with the plugin | Same trust grant applies |
+| Project memory | `CLAUDE.md` | `AGENTS.md` |
+| Subagent definition | `agents/*.md` with YAML frontmatter | `agents/*.toml` with `developer_instructions` |
+
+Codex's trust gate is a feature, not an obstacle: a plugin that could register a
+tool-blocking hook with no human acknowledgement would itself be an attack surface. The
+correct response is to grant trust deliberately in the TUI, not to pass
+`--dangerously-bypass-hook-trust`, which disables exactly the check that makes third-party
+hooks safe to run.
+
+The consequence for adoption is concrete. On a Codex-only team, until trust is granted the
+loop is held by project memory alone — the weakest layer, the one a model can talk itself
+out of. Treat that state as "the artifacts are in place, the gates are not", and say so in
+the rollout notes rather than claiming enforcement the machine is not providing.
 
 ## Threat model
 

@@ -4,6 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-black.svg)](LICENSE)
 ![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-black)
+![Codex plugin](https://img.shields.io/badge/Codex-plugin-black)
 ![Stages](https://img.shields.io/badge/stages-6-black)
 
 ![The AI-native SDLC loop: Plan writes intent.md, Design writes spec.md, Build writes plan.md, Test produces tests and evals, Deploy runs REVIEW.md, Maintain watches bands.yaml, and a control-band breach files the next intent.md to restart the loop. A human gate separates every stage.](docs/loop.svg)
@@ -41,8 +42,14 @@ Two subagents serve it: `sdlc-reviewer` runs the `REVIEW.md` passes in Stage 5, 
 
 ## Install
 
+Works on **Claude Code** and **Codex**. Both read the same plugin directory — the six
+stage skills, the hooks, and the artifact templates are shared; only the manifest and the
+subagent format differ, and both are shipped.
+
 A marketplace source can be a GitHub repo, a URL, or a local path, so a clone installs
 the same way a published repo does.
+
+### Claude Code
 
 From the terminal — works everywhere, including surfaces where the `/plugin` dialog is
 unavailable:
@@ -72,13 +79,39 @@ claude --plugin-dir /absolute/path/to/ai-native-sdlc/plugins/ai-sdlc
 stored under `~/.claude/plugins/`, shared by the CLI and the desktop app, so installing
 once covers both. Pull in later edits with `claude plugin marketplace update ai-native-sdlc`.
 
+### Codex
+
+```bash
+codex plugin marketplace add /absolute/path/to/ai-native-sdlc
+```
+
+```bash
+codex plugin add ai-sdlc@ai-native-sdlc
+```
+
+Codex reads `plugins/ai-sdlc/.codex-plugin/plugin.json`, which points at the same
+`skills/`, the same hook scripts through `hooks/hooks.codex.json`, and the `agents/*.toml`
+subagent definitions. Nothing needs converting.
+
+One difference matters. **Codex requires a one-time trust grant before plugin hooks run,
+and only the interactive Codex TUI can give it.** Until you grant it there, the plugin's
+skills and subagents work but the gates are advisory — the enforcement layer is off. Check
+the plugin's hook state in the Codex TUI plugin menu after installing. Do not reach for
+`--dangerously-bypass-hook-trust` to skip this; the trust prompt is the thing that makes a
+hook safe to run.
+
+Project memory also differs: Codex reads `AGENTS.md`, Claude Code reads `CLAUDE.md`.
+`ai-sdlc-init` detects which the project uses and writes the same content to both when
+both apply, from one template, so they cannot drift.
+
 Read the next section before you install — this plugin registers hooks.
 
 ## What installing this changes on your machine
 
 Read this before installing. This plugin ships hooks, and hooks run automatically.
 
-Once the plugin is enabled, four hooks are registered for every Claude Code session:
+Once the plugin is enabled, four hooks are registered for every session (immediately on
+Claude Code; on Codex after you grant hook trust in its TUI):
 
 | Hook | Fires | Does |
 | --- | --- | --- |
@@ -93,7 +126,7 @@ In a repository that has opted in, expect the gates to actually stop you. That i
 
 - `.sdlc/OPTOUT` — silences every hook for that repository, permanently, no other change needed.
 - `AI_SDLC_ALLOW_PROD=1` — authorizes one production command after a human has approved it.
-- `/plugin uninstall ai-sdlc` — removes the hooks entirely.
+- `/plugin uninstall ai-sdlc` (Claude Code) or `codex plugin remove ai-sdlc@ai-native-sdlc` (Codex) — removes the hooks entirely.
 
 Each block message names the rule that matched and the escape hatch, so a blocked action is never a mystery.
 
@@ -175,9 +208,16 @@ Evals are regression tests for the **agent configuration** rather than the code.
 
 No. Every hook checks for a `.sdlc/` directory first and exits silently without one. This is verified behavior, not an intention.
 
-### Does it work with agents other than Claude Code?
+### Does it work with Codex, or only Claude Code?
 
-The methodology in [`docs/PLAYBOOK.md`](docs/PLAYBOOK.md) is tool-neutral and the artifact templates are plain Markdown. The plugin packaging — skills, hooks, subagents — is Claude Code specific.
+Both. The plugin ships a Claude Code manifest and a Codex manifest side by side, and the
+skills, hook scripts, and templates are shared verbatim. The two differences are handled
+for you: subagents ship in `.md` (Claude Code) and `.toml` (Codex), and project memory is
+written to `CLAUDE.md` or `AGENTS.md` as the harness requires. The one thing you must do
+yourself on Codex is grant hook trust in its TUI, without which the gates are advisory.
+
+For any other agent, the methodology in [`docs/PLAYBOOK.md`](docs/PLAYBOOK.md) is
+tool-neutral and the artifact templates are plain Markdown.
 
 ### Can I use my existing Jira or ServiceNow workflow?
 
@@ -197,9 +237,9 @@ Yes. Those can remain the system of record as long as commits link both ways. Th
 ├── examples/rate-limit/  # One change walked through all six stages
 ├── plugins/ai-sdlc/
 │   ├── .claude-plugin/   # Plugin manifest
-│   ├── skills/           # Six executable stage procedures
-│   ├── commands/         # /ai-sdlc-init and /ai-sdlc-status
-│   ├── agents/           # sdlc-reviewer, sdlc-diagnostician
+│   ├── .codex-plugin/    # Codex plugin manifest
+│   ├── skills/           # Six stage procedures plus ai-sdlc-init and ai-sdlc-status
+│   ├── agents/           # sdlc-reviewer, sdlc-diagnostician (.md for Claude, .toml for Codex)
 │   ├── hooks/            # Artifact gate, production guard, state, session context
 │   └── templates/        # intent, spec, plan, CLAUDE, REVIEW, bands, settings
 └── .claude-plugin/       # Marketplace catalog
