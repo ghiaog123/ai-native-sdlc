@@ -47,34 +47,38 @@ stage skills, the hooks, and the artifact templates are shared; only the manifes
 subagent format differ, and both are shipped.
 
 A marketplace source can be a GitHub repo, a URL, or a local path, so a clone installs
-the same way a published repo does. While this repository is private, the `owner/repo`
-shorthand needs your git credentials to resolve — use the local-path form below if it
-fails.
+the same way the published repo does.
 
 ### Claude Code
 
-From the terminal — works everywhere, including surfaces where the `/plugin` dialog is
-unavailable:
-
-```bash
-claude plugin marketplace add /absolute/path/to/ai-native-sdlc
-```
-
-```bash
-claude plugin install ai-sdlc@ai-native-sdlc --scope user
-```
-
-From inside an interactive Claude Code session:
+From GitHub, in an interactive session:
 
 ```text
 /plugin marketplace add ghiaog123/ai-native-sdlc
 /plugin install ai-sdlc@ai-native-sdlc
 ```
 
+From GitHub, in the terminal — works everywhere, including surfaces where the `/plugin`
+dialog is unavailable:
+
+```bash
+claude plugin marketplace add ghiaog123/ai-native-sdlc
+```
+
+```bash
+claude plugin install ai-sdlc@ai-native-sdlc --scope user
+```
+
+From a local clone, when you are changing the plugin itself:
+
+```bash
+claude plugin marketplace add ./ai-native-sdlc
+```
+
 To try it for one session only, without installing anything:
 
 ```bash
-claude --plugin-dir /absolute/path/to/ai-native-sdlc/plugins/ai-sdlc
+claude --plugin-dir ./ai-native-sdlc/plugins/ai-sdlc
 ```
 
 `ai-sdlc` is the plugin; `ai-native-sdlc` is the marketplace it comes from. Installs are
@@ -83,12 +87,33 @@ once covers both. Pull in later edits with `claude plugin marketplace update ai-
 
 ### Codex
 
+From GitHub:
+
 ```bash
-codex plugin marketplace add /absolute/path/to/ai-native-sdlc
+codex plugin marketplace add ghiaog123/ai-native-sdlc --ref main
 ```
 
 ```bash
 codex plugin add ai-sdlc@ai-native-sdlc
+```
+
+The source argument also takes `owner/repo@ref`, an HTTPS Git URL, or an SSH Git URL, so
+`codex plugin marketplace add git@github.com:ghiaog123/ai-native-sdlc.git` works too. Add
+`--sparse .claude-plugin --sparse plugins` to skip the docs and examples on checkout.
+
+Pull in later changes with:
+
+```bash
+codex plugin marketplace upgrade ai-native-sdlc
+```
+
+That command only works for a Git marketplace. A marketplace added from a local path has
+no revision to upgrade to — re-add it instead.
+
+From a local clone, when you are changing the plugin itself:
+
+```bash
+codex plugin marketplace add ./ai-native-sdlc
 ```
 
 Codex reads `plugins/ai-sdlc/.codex-plugin/plugin.json`, which points at the same
