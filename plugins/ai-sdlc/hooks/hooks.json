@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/artifact-gate.sh"
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/artifact-gate.sh\""
           }
         ]
       },
@@ -15,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/prod-guard.sh"
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/prod-guard.sh\""
           }
         ]
       }
@@ -25,7 +25,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-context.sh"
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/session-context.sh\""
           }
         ]
       }
@@ -35,7 +35,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/prompt-nudge.sh"
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/prompt-nudge.sh\""
           }
         ]
       }
