@@ -6,7 +6,7 @@
     {
       "name": "ai-sdlc",
       "source": "./plugins/ai-sdlc",
-      "description": "Six-stage AI-native SDLC as skills, commands, subagents and hooks: intent.md → spec.md → plan.md → PR → production → control bands → next intent.md.",
+      "description": "Six-stage AI-native SDLC as skills, commands, subagents and hooks: intent.md → spec.md → reviewed plan.md → PR → production → control bands → next intent.md. A low-risk change a person declares takes the fast path and enters at Build; review rounds are capped and recorded.",
       "license": "MIT",
       "keywords": ["sdlc", "ai-native", "intent-driven", "governance", "approval-gates", "control-bands", "code-review"]
     }

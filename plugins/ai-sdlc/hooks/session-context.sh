@@ -9,6 +9,7 @@ ROWS="$($STATE --long)"
 
 printf '%s\n' 'AI-Native SDLC loop is active.'
 printf '%s\n' 'Chain: intent.md -> spec.md -> plan.md -> code -> test -> PR -> band-watch'
+printf '%s\n' 'Fast path: a person declares a change low-risk -> plan.md -> code (no sensitive path)'
 printf '%s\n' 'Skills: 1 sdlc-plan | 2 sdlc-design | 3 sdlc-build | 4 sdlc-test | 5 sdlc-deploy | 6 sdlc-maintain'
 printf '\n%-22s %-18s %s\n' 'Slug' 'Current stage' 'Next action / human gate'
 printf '%-22s %-18s %s\n' '----------------------' '------------------' '------------------------'

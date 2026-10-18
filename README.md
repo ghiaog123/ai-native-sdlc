@@ -38,7 +38,11 @@ This is sometimes called agentic SDLC, AI-driven SDLC, or spec-driven developmen
 
 Stage 6 feeds Stage 1. That is the loop.
 
-Two subagents serve it: `sdlc-reviewer` runs the `REVIEW.md` passes in Stage 5, and `sdlc-diagnostician` turns a control-band breach into a draft `intent.md` in Stage 6.
+Two subagents serve it: `sdlc-reviewer` reviews the plan in Stage 3, runs the `REVIEW.md` passes in Stage 5, and verifies a finding is real before it is posted; `sdlc-diagnostician` turns a control-band breach into a draft `intent.md` in Stage 6.
+
+A change a person declares low-risk takes the **fast path**: it enters at Build, skipping Stage 1 and Stage 2 and nothing else. The agent checks that declaration against the sensitive-path list in `REVIEW.md` and refuses it when the change reaches one — `REVIEW.md` is itself on that list, so the list cannot be emptied on the fast path. The artifact gate enforces the refusal, and Stage 5 re-checks the real diff, because a declared file list is a claim about work not yet done.
+
+Review rounds are capped at three and recorded in `.sdlc/<slug>/review-findings.md`. After the first round the reviewer sees only the new diff, never reports a finding it already posted, and reports a defect at several call sites once, as a class. At the cap it stops and sends the change back to its plan: rounds that keep finding more mean the approach is wrong, not that the review is working.
 
 ## Install
 
@@ -267,8 +271,8 @@ Yes. Those can remain the system of record as long as commits link both ways. Th
 │   ├── .codex-plugin/    # Codex plugin manifest
 │   ├── skills/           # Six stage procedures plus ai-sdlc-init and ai-sdlc-status
 │   ├── agents/           # sdlc-reviewer, sdlc-diagnostician (.md for Claude, .toml for Codex)
-│   ├── hooks/            # Artifact gate, production guard, state, session context
-│   └── templates/        # intent, spec, plan, CLAUDE, REVIEW, bands, settings
+│   ├── hooks/            # Artifact gate, production guard, state, session context, and their checks
+│   └── templates/        # intent, spec, plan, review-findings, CLAUDE, REVIEW, bands, settings
 └── .claude-plugin/       # Marketplace catalog
 ```
 

@@ -21,6 +21,14 @@ Proceed only when the user has supplied a problem statement, even if it is rough
 
 If there is no problem statement, ask for one and stop.
 
+If the originator declares the change low-risk — a copy fix, a documentation
+correction, a change behind a flag that is off — check the **Sensitive paths** list in
+`REVIEW.md` against the files the change would touch. When nothing matches, hand the
+change to `sdlc-build` to enter on the fast path, and stop: an interview about a typo
+spends the originator's attention on a decision they have already made. When something
+matches, say which path it is and run this stage normally. The declaration is theirs to
+make; the path check is not negotiable, and the artifact gate enforces it either way.
+
 Derive a short, filesystem-safe kebab-case `<slug>` only after the originator has
 identified the feature well enough to name it. Confirm the name when it could be
 ambiguous.

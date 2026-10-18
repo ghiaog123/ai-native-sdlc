@@ -30,21 +30,50 @@ If verification is incomplete, stale after changes, missing, or red, return to
 
 0. Identify the slug for this change and read `.sdlc/<slug>/spec.md` and
    `.sdlc/<slug>/plan.md`. The PR description must link them, so a reviewer can see
-   the accepted intent, spec, and plan behind the diff without leaving the PR.
+   the accepted intent, spec, and plan behind the diff without leaving the PR. A
+   fast-path change has only `plan.md`: link that, and quote its `## Fast path`
+   declaration in the PR so the reviewer sees who called the change low-risk and why.
 1. Locate the project's `REVIEW.md`.
-2. If it exists, read every applicable review pass and its nit cap.
+2. If it exists, read every applicable review pass, the depth setting, the round
+   cap, the sensitive-path list, and the nit cap.
 3. If it does not exist, record that fact and continue with the required review
    passes using sound judgment.
-4. Assemble the code changes, verification evidence, and `REVIEW.md` instructions.
-5. Invoke the `sdlc-reviewer` subagent with the changes and the review passes:
-   Bugs, Security, and Compliance.
-6. Require the subagent to rank each finding as `Important` or `Nit`.
-7. Enforce the nit cap from `REVIEW.md`; for example, if it says `max 5 nits`,
-   include at most five nits.
-8. If `REVIEW.md` has no cap, use judgment and keep nits actionable.
-9. Create or update the pull request with context, test evidence, and findings.
-10. Post the findings as a PR comment or include them in the PR body.
-11. Cite the review findings and explicitly stop for human approval.
+4. Read `.sdlc/<slug>/review-findings.md` if it exists. It carries the round
+   number, the SHA each earlier round reviewed, and every finding already posted.
+5. If the change took the fast path, compare the real diff against the
+   sensitive-path list now. A diff touching any sensitive path revokes the fast
+   path: say which path it reached, and route the change to `sdlc-plan` to enter
+   through Stage 1 and Stage 2, exactly as `sdlc-build` would have refused the
+   declaration had the file been declared. Do not review it onward.
+6. Determine the round number. If this would be round 4, stop reviewing: record
+   that the cap is reached and return the author to `plan.md` to reconsider the
+   approach rather than fixing findings one by one.
+7. Determine the review scope. Round 1 reviews the whole change; later rounds
+   review only the diff since the previous round's recorded SHA.
+8. Assemble the changes in scope, verification evidence, and `REVIEW.md`
+   instructions.
+9. Invoke the `sdlc-reviewer` subagent in review mode with the changes and the
+   passes `REVIEW.md` names for this depth. At Standard and Deep that is Bugs,
+   Security, and Compliance; at Quick it is Bugs and Security. Security runs at
+   every depth.
+10. Drop every finding an earlier round already posted. Count them.
+11. Invoke the `sdlc-reviewer` subagent again in verify mode, in a fresh context,
+    with the surviving findings and the diff they cite, and without the reasoning
+    that produced them. Discard every finding it judges not real. Count them.
+12. Require each surviving finding to carry a `REVIEW.md` severity: `Important`,
+    `Minor`, `Nit`, or `Pre-existing`.
+13. Enforce the nit cap from `REVIEW.md`; for example, if it says `max 5 nits`,
+    include at most five nits.
+14. If `REVIEW.md` has no cap, use judgment and keep nits actionable.
+15. Append this round to `.sdlc/<slug>/review-findings.md` using the plugin's
+    template: round number, stage, reviewed SHA, scope, passes run, findings,
+    suppressed count, and verifier-rejected count.
+16. Scan `.sdlc/*/review-findings.md` for a finding class that now appears in two
+    or more changes, and record it under **Recurring** in this change's file, with
+    what encodes it.
+17. Create or update the pull request with context, test evidence, and findings.
+18. Post the findings as a PR comment or include them in the PR body.
+19. Cite the review findings and explicitly stop for human approval.
 
 Give the reviewer only evidence and review scope, not authority to waive risks.
 
@@ -55,9 +84,20 @@ Tell the `sdlc-reviewer` subagent to inspect the actual diff and report:
 - Bugs found by the Bugs pass.
 - Security concerns found by the Security pass.
 - Compliance concerns found by the Compliance pass.
-- Severity for each finding: `Important` or `Nit`.
+- Severity for each finding: `Important`, `Minor`, `Nit`, or `Pre-existing`.
 - File and line references where available.
 - Concise rationale and a suggested remediation when appropriate.
+- How many findings it suppressed as already posted in an earlier round.
+
+A real defect in code this change did not introduce is `Pre-existing`. The reviewer
+reports it; it does not block merge and is not counted against the author. A
+pre-existing defect that is a security finding stays under Security at its real
+severity and blocks merge like any other.
+
+The verifier runs as the same subagent in verify mode, in its own context, and sees
+only the findings and the cited code. Do not pass it the reviewer's reasoning, and
+do not let it change a severity or add a finding. It answers one question per
+finding: does this failure actually happen?
 
 Pass through the project's `REVIEW.md` rules. Do not replace them with an invented
 review rubric.
@@ -72,9 +112,18 @@ Separate Important findings from Nits in the PR content.
 Keep the number of nits within the `REVIEW.md` cap. Important findings are not
 nits and must not be hidden by the cap.
 
+List every `Pre-existing` finding in the PR under its own heading, with the
+location and a proposed disposition: fix now, a backlog reference, or accepted
+with a reason. A pre-existing finding is never silently dropped. Nothing else in
+this loop looks for old defects, so this list is the only place they surface.
+
 Include test evidence from Stage 4 so a human can evaluate the change.
 
-State whether `REVIEW.md` was found and, if so, which passes governed the review.
+State whether `REVIEW.md` was found and, if so, which passes governed the review,
+at which depth, and which round this is.
+
+State the round's counts: findings posted, suppressed as already reported, and
+rejected by the verifier.
 
 Do not alter code merely to make findings disappear without returning to the test
 stage for fresh verification.
@@ -103,6 +152,12 @@ organization.
 Never treat your own PR post as human approval.
 
 ## Exit gate
+
+Before posting, check **Recurring** in `.sdlc/<slug>/review-findings.md`. Every
+finding class now seen in two or more changes must name what encodes it: a line in
+`CLAUDE.md`, a lint rule, or a rule in `REVIEW.md`. A row with no encoding holds
+this gate. Fixing the instance is not fixing the class — the third occurrence is
+the one this prevents.
 
 Post the PR and cite the ranked findings. Then explicitly stop.
 

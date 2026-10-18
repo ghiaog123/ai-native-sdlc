@@ -137,7 +137,7 @@ Humans still approve intent, specification, plan, merge, and production release.
 
 ### What to turn on
 
-Commit root `REVIEW.md` with three passes: bugs, security, and compliance against accepted artifacts.
+Commit root `REVIEW.md` with four passes: plan against the accepted spec before code exists, then bugs, security, and compliance against accepted artifacts. Set its sensitive-path list, review depth, and round cap in the same commit — they are the knobs that decide how much review a change gets, and leaving them at the template's defaults is a choice nobody made.
 
 Define Important, cap individual nits, and exclude generated or deterministically checked paths.
 
@@ -164,6 +164,8 @@ Run evals on a schedule to expose model, dependency, and environment drift.
 Make the eval threshold a required check only after the team understands variance and invalid cases.
 
 Keep the agent identity unable to approve pull requests or bypass branch protection.
+
+Turn on dismissal of stale approvals. An approval covers the commit a person read, not the branch: without this, an agent pushing a fix after your approval ships code nobody approved, and agents push fixes constantly. The plugin cannot set this — it ships skills, templates and hooks, and does not touch repository settings — so it is yours to enable. On GitHub it is "Dismiss stale pull request approvals when new commits are pushed" in the branch ruleset; other providers name it differently.
 
 Begin non-interactive CI with read-only jobs such as failed-build triage or review.
 
@@ -211,6 +213,7 @@ If the team clicks every approval immediately, pause automation and audit a samp
 - Evals fail on known-bad configurations and pass on the approved baseline.
 - CI jobs have bounded tools, identity, budget, timeout, and structured output.
 - Branch protection preserves independent approval.
+- Branch protection dismisses stale approvals when new commits are pushed.
 - Incidents are linked to corrective tests or evals.
 - The team can explain every automated gate and its evidence.
 

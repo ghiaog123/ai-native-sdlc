@@ -304,6 +304,8 @@ Give the agent identity `contents: write` only on feature branches and no rulese
 
 Protect changes to `CLAUDE.md`, `REVIEW.md`, `bands.yaml`, skills, hooks, workflows, and CODEOWNERS with appropriate owners.
 
+Those same paths belong in the **Sensitive paths** list in `REVIEW.md`, which is the machine-checkable form of this rule. Branch protection stops a merge; the sensitive-path list stops a change reaching the fast path in the first place, and the artifact gate enforces it at write time. Keep the two lists in step — a path protected here but missing there can be edited on the fast path right up to the merge gate. `REVIEW.md` is on its own list so the list cannot be widened or emptied by a change that skipped the earlier stages.
+
 ## Sandboxing
 
 ### What sandboxing stops

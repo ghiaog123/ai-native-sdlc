@@ -26,7 +26,12 @@ Answer one question: for each in-flight change, what is the next human decision?
 4. Flag stalls explicitly:
    - any artifact that is uncommitted, and therefore not yet accepted;
    - a `spec.md` whose modification time is older than the code it governs, which means the code has moved on without the spec;
-   - a `plan.md` recording deviations — look for a `## Deviations` section or unchecked deviation items.
+   - a `plan.md` recording deviations — look for a `## Deviations` section or unchecked deviation items;
+   - a `review-findings.md` whose last round reached the cap, which means the change is waiting on a rethink of its approach rather than on another fix;
+   - a `review-findings.md` with an unencoded row under `## Recurring`, which holds the Stage 5 exit gate;
+   - a `Pre-existing` finding with no decision recorded, which is a defect nobody has accepted or scheduled.
+
+   A slug whose `plan.md` has a `## Fast path` section entered at Build with no `intent.md` or `spec.md`. That is not a stall and not a missing artifact. Say which changes took it, and name the person who declared each one low-risk — the fast path spends their judgement, so it should be visible.
 
 5. Print a compact table: slug, artifacts present, furthest stage, git state, next human gate, stalls.
 
