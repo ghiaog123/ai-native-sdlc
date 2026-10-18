@@ -7,6 +7,19 @@
 ![Codex plugin](https://img.shields.io/badge/Codex-plugin-black)
 ![Stages](https://img.shields.io/badge/stages-6-black)
 
+![A terminal session. A plan.md declares a typo fix low-risk on the fast path and lists README.md as the only file it changes. The artifact gate admits a write to README.md with exit 0, then blocks a write to REVIEW.md with exit 2, because a fast-path change cannot reach a path listed under Sensitive paths.](docs/demo.gif)
+
+A person called that change low-risk, so it skipped the intent and spec stages. Then the agent reached for `REVIEW.md` — the file that defines what it may touch — and a hook stopped it. That is the whole idea: **a declaration buys fewer stages, never fewer boundaries.**
+
+Reproduce it in a throwaway repository, no plugin install needed:
+
+```bash
+export GATE="$PWD/plugins/ai-sdlc/hooks/artifact-gate.sh"
+source docs/demo-setup.sh
+gate README.md    # exit 0
+gate REVIEW.md    # exit 2
+```
+
 ![The AI-native SDLC loop: Plan writes intent.md, Design writes spec.md, Build writes plan.md, Test produces tests and evals, Deploy runs REVIEW.md, Maintain watches bands.yaml, and a control-band breach files the next intent.md to restart the loop. A human gate separates every stage.](docs/loop.svg)
 
 Agents generate, investigate, implement, and verify. Humans approve the decisions that need judgment. Git records who asked, what the agent produced, and who approved it.
