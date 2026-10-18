@@ -47,10 +47,17 @@ has_evidence() {
 }
 
 has_pr() {
-  local slug_dir="$1" pattern
-  for pattern in 'pr.md' 'pull-request.md' 'review-findings.md'; do
+  local slug_dir="$1" pattern line
+  for pattern in 'pr.md' 'pull-request.md'; do
     [[ -f "$slug_dir/$pattern" ]] && committed "$slug_dir/$pattern" && return 0
   done
+  # review-findings.md alone is not a PR: Stage 3 writes it for the plan review,
+  # before any code exists. Only a recorded Code round means a diff was reviewed.
+  if [[ -f "$slug_dir/review-findings.md" ]] && committed "$slug_dir/review-findings.md"; then
+    while IFS= read -r line || [[ -n "$line" ]]; do
+      [[ "$line" =~ ^##[[:space:]]+Round[[:space:]]+[0-9]+[[:space:]]+.*Code ]] && return 0
+    done < "$slug_dir/review-findings.md"
+  fi
   markdown_matches "$slug_dir" 'https://[^[:space:]]+/(pull|merge_requests)/[0-9]+'
 }
 
@@ -76,11 +83,36 @@ shopt -s nullglob
 for slug_dir in "$SDLC_DIR"/*; do
   [[ -d "$slug_dir" ]] || continue
   slug="${slug_dir##*/}"
+  # Reserved: .sdlc/evals/ holds reviewer eval cases, not a change.
+  [[ "$slug" == "evals" ]] && continue
   intent="$slug_dir/intent.md"
   spec="$slug_dir/spec.md"
   plan="$slug_dir/plan.md"
 
-  if [[ ! -f "$intent" ]]; then
+  # A fast-path change enters at Build: no intent.md, no spec.md, only plan.md.
+  # Derive its stage from plan.md alone, or it reports as stage 0 forever.
+  is_fast_path=0
+  if [[ -f "$plan" && ! -f "$intent" && ! -f "$spec" ]]; then
+    while IFS= read -r line || [[ -n "$line" ]]; do
+      [[ "$line" =~ ^##[[:space:]]+Fast[[:space:]]path ]] && is_fast_path=1 && break
+    done < "$plan"
+  fi
+
+  if [[ "$is_fast_path" == 1 ]]; then
+    if ! committed "$plan"; then
+      emit "$slug" 3 "Build" "fast path; plan.md is awaiting its approval commit." "engineer approves plan"
+    elif is_released "$slug_dir"; then
+      emit "$slug" 6 "Maintain" "fast path; change is merged or deployed." "watch for band breach"
+    elif code_is_dirty; then
+      emit "$slug" 3 "Build" "fast path; plan.md accepted; implementing." "finish code"
+    elif ! has_evidence "$slug_dir"; then
+      emit "$slug" 3 "Build" "fast path; code committed; verification evidence is absent." "run sdlc-test"
+    elif ! has_pr "$slug_dir"; then
+      emit "$slug" 4 "Test" "fast path; verification is green." "start sdlc-deploy"
+    else
+      emit "$slug" 5 "Deploy" "fast path; PR is open with verification evidence." "human approves the PR"
+    fi
+  elif [[ ! -f "$intent" ]]; then
     emit "$slug" 0 "Plan" "intent.md is absent." "write intent (sdlc-plan)"
   elif ! committed "$intent"; then
     emit "$slug" 1 "Plan" "intent.md is awaiting its acceptance commit." "product owner accepts intent"

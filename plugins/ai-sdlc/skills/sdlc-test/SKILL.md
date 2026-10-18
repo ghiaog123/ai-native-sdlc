@@ -26,17 +26,27 @@ Verify that the spec was accepted and that implementation is available to test.
 If any artifact, required section, or implementation is missing, return to
 `sdlc-build` and stop.
 
+A change whose `plan.md` has a `## Fast path` section has no `spec.md` by design. For
+it, require `plan.md`, its **Proof** section, and the implemented code, and read the
+fast-path declaration in place of the spec. Everything else in this stage is unchanged:
+the fast path skips Stage 1 and Stage 2, never verification.
+
 ## Procedure
 
 1. Read `plan.md` **Proof** in full.
-2. Read `spec.md` **Verification strategy** in full.
-3. Map the planned proof to the spec's requirements and verification strategy.
+2. Read `spec.md` **Verification strategy** in full, or, on the fast path, the
+   `## Fast path` declaration and the plan's stated scope.
+3. Map the planned proof to the spec's requirements and verification strategy, or on
+   the fast path to the declared scope and reason.
 4. Discover the project's documented test commands and test suites.
 5. Execute all tests in the project, including the tests named by the plan where
    applicable.
 6. Capture actual command output, exit status, skipped tests, and failures.
 7. Quote the real relevant output in the verification report.
-8. Determine whether this change modified `CLAUDE.md`, any skill, or any hook.
+8. Determine whether this change modified `CLAUDE.md`, any skill, any hook,
+   `REVIEW.md`, or the reviewer subagent definition. The review policy and the
+   reviewer are configuration like any other: a change that weakens either is a
+   change nothing else in the loop will catch.
 9. If it did, discover the project's existing eval suite for that configuration.
 10. Run the applicable eval suite and quote its actual output and exit status.
 11. If no eval suite exists, state that none was found; do not invent an eval.
@@ -52,8 +62,32 @@ specific blocker and do not mark verification green.
 An eval is a fixed prompt set with expected-behaviour assertions, versioned beside
 the configuration it protects.
 
-When `CLAUDE.md`, a skill, or a hook changes, find and run the project evals that
-guard that configuration.
+When `CLAUDE.md`, a skill, a hook, `REVIEW.md`, or the reviewer definition changes,
+find and run the project evals that guard that configuration.
+
+## The reviewer's own eval set
+
+`.sdlc/evals/reviewer/` holds the cases that protect the reviewer itself. Each case
+is one past change that escaped review, with the defect that escaped:
+
+```text
+.sdlc/evals/reviewer/
+├── proposed/     written by sdlc-maintain, not yet confirmed by a person
+├── confirmed/    a person agreed the defect is real; these are the eval set
+└── clean/        changes known to contain no defect
+```
+
+A case names the change, the commit that introduced the defect, the file and line,
+the bug class, and the fix. A case passes when the reviewer, run against that
+change, reports that file and that bug class at `Important`. Reporting something
+else at that location is not a pass.
+
+Run `confirmed/` when `REVIEW.md` or the reviewer definition changes, and keep the
+result only if it does not fall. Run `clean/` the same way: a finding there is a
+false alarm, and the rate is the noise signal in `docs/METRICS.md`.
+
+Only a person moves a case from `proposed/` to `confirmed/`. An agent never
+promotes its own case, and an unconfirmed case never gates anything.
 
 Do not invent an eval suite, expected results, or passing result. Note plainly when
 no project eval suite can be found.

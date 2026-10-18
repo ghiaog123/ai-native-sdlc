@@ -55,6 +55,8 @@ route from this example.
 8. On a tier-2 breach, diagnose using only the tools listed in `bands.yaml`.
 9. Record diagnostic evidence, hypotheses, and unresolved uncertainty.
 10. On a tier-3 breach, write a new proposed fix intent and stop.
+11. On a tier-3 breach whose evidence points at a specific merged change, also
+    write a proposed reviewer eval case, as described below.
 
 Do not silently change the baseline, tier definitions, or alerting configuration.
 
@@ -86,6 +88,25 @@ List affected users and systems, operational constraints, and all unresolved roo
 cause questions explicitly.
 
 The proposal is not authorization to change production.
+
+## Proposed reviewer eval case
+
+A breach that traces to a merged change is a defect the review passes did not
+catch. Record it where it can be used to test the reviewer, or the same class
+escapes again.
+
+Write `.sdlc/evals/reviewer/proposed/<slug>.md` with: the change and its commit
+SHA, the file and line holding the defect, the bug class in one phrase, the
+observed production evidence, and the fix once it exists. The case passes when the
+reviewer, run against that change, reports that file and that bug class at
+`Important`.
+
+Do not write a case when the evidence does not identify a specific change. A guess
+in the eval set makes every later reviewer score meaningless.
+
+Do not promote the case yourself. A person moves it to `confirmed/` after agreeing
+the defect is real; only `confirmed/` cases gate anything. Writing a proposal is
+not confirming a root cause.
 
 ## Scheduled responsibilities
 

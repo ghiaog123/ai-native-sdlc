@@ -21,7 +21,7 @@ Turn the loop on for this repository. Creating `.sdlc/` is the opt-in switch tha
 
 3. Present all extracted commands as a clearly labelled list or diff. Write nothing yet. Ask for explicit human confirmation: "Review the commands above. Approve all, reject specific commands, or request edits before I write project memory." Do not proceed without explicit approval.
 
-4. Only after approval, create `.sdlc/` if absent. Add a short `.sdlc/README.md` only when the project has no local workflow instructions, explaining that each change gets a slug directory holding `intent.md`, `spec.md`, and `plan.md`.
+4. Only after approval, create `.sdlc/` if absent. Add a short `.sdlc/README.md` only when the project has no local workflow instructions, explaining that each change gets a slug directory holding `intent.md`, `spec.md`, `plan.md`, and `review-findings.md`, and that a change a person declares low-risk may enter at `plan.md` alone. Create `.sdlc/evals/reviewer/proposed/`, `confirmed/` and `clean/` as empty directories: they hold the cases that protect the reviewer itself, and `sdlc-maintain` writes into `proposed/` the first time a breach traces to a merged change.
 
 5. Copy the plugin's `REVIEW.md` and `bands.yaml` templates to the **repository root**, and only when the destination does not already exist. These two files are project-root policy, not per-change artifacts — the stage skills and the `sdlc-reviewer` subagent read them from the root. An existing file is authoritative: show a diff and offer a merge proposal instead of replacing it.
 
@@ -40,8 +40,9 @@ Turn the loop on for this repository. Creating `.sdlc/` is the opt-in switch tha
 
    This repository uses the AI-Native SDLC loop (https://claude.com/blog/the-ai-native-sdlc-playbook).
 
-   - Artifacts live in `.sdlc/<slug>/`: intent.md, spec.md, plan.md
-   - Project-root policy: REVIEW.md (review passes), bands.yaml (control bands)
+   - Artifacts live in `.sdlc/<slug>/`: intent.md, spec.md, plan.md, review-findings.md
+   - A low-risk change may enter at Build with plan.md alone, declared by a person
+   - Project-root policy: REVIEW.md (passes, depth, sensitive paths, round cap), bands.yaml (control bands)
    - No source code is written for a change without an accepted plan.md
    - No gate is ever self-approved by the agent
    - Six stage skills guide the loop: sdlc-plan -> sdlc-design -> sdlc-build -> sdlc-test -> sdlc-deploy -> sdlc-maintain

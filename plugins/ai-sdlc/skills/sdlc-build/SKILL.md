@@ -1,6 +1,6 @@
 ---
 name: sdlc-build
-description: Convert an accepted .sdlc/feature-slug/spec.md into an engineer-approved plan.md and then implement it in the accepted order. Do NOT use for unapproved specifications, independent architecture review, test sign-off, PR review, merging, deployment, or production monitoring.
+description: Convert an accepted .sdlc/feature-slug/spec.md into a reviewed, engineer-approved plan.md and then implement it in the accepted order. Also the entry point for the fast path, when a person declares a change low-risk and it enters at Build with no intent.md or spec.md. Do NOT use for unapproved specifications, for a change the sensitive-path list covers, independent architecture review, test sign-off, PR review, merging, deployment, or production monitoring.
 ---
 
 # SDLC Build
@@ -20,14 +20,53 @@ Locate `.sdlc/<slug>/spec.md` and read it completely.
 
 Proceed only when the spec exists and declares `Status: accepted`.
 
-If the spec is absent, draft, or unapproved, route to `sdlc-design` and stop.
+If the spec is absent, draft, or unapproved, route to `sdlc-design` and stop —
+unless the change enters on the fast path below.
 
 Do not begin code changes during Phase A.
+
+## Fast path
+
+The playbook already allows a low-risk change to enter at Build. This is how.
+
+A change takes the fast path only when a person declares it low-risk. The agent
+never makes that call; it checks the declaration and can refuse it.
+
+On a declaration, before writing anything:
+
+1. Read the **Sensitive paths** list in `REVIEW.md`. If that file or that list is
+   absent, there is no fast path: route to `sdlc-plan` and stop.
+2. Compare every file the change will touch against that list.
+3. If any file matches, refuse the fast path, name the matching path, and route to
+   `sdlc-plan`. A declaration does not override the list.
+4. If none matches, write `.sdlc/<slug>/plan.md` with a `## Fast path` section
+   immediately above `## Files that change`:
+
+   ```markdown
+   ## Fast path
+   Declared low-risk by: [person]. Reason: [why].
+   Sensitive-path check: no file in `REVIEW.md` **Sensitive paths** is touched.
+   ```
+
+Add that heading only to a fast-path plan. The artifact gate reads it from the
+committed plan, and while it is present every sensitive path is closed to this
+change — an ordinary plan carrying it would block its own work. When a change is
+re-routed to `sdlc-plan`, remove the section.
+
+A fast-path change skips Stage 1 and Stage 2. It skips nothing else. It still gets
+the Plan review below, the full Build and Test stages, the Stage 5 review passes,
+and a human approval on the PR.
+
+The declared file list is a claim, not a fact. `sdlc-deploy` checks the real diff
+against the sensitive-path list again, and a diff that reaches one revokes the fast
+path.
 
 ## Phase A: interview and plan
 
 1. Read the accepted spec, including requirements, non-goals, concerns, and
-   verification strategy.
+   verification strategy. On the fast path there is no spec: read the `## Fast path`
+   declaration instead, and treat its stated reason and scope as the requirement the
+   plan must satisfy.
 2. Interview the engineer about the proposed approach.
 3. Ask which tools or libraries the engineer expects to use and why.
 4. Ask for every file expected to change, be added, or be removed.
@@ -35,8 +74,49 @@ Do not begin code changes during Phase A.
 6. Ask which risks, migrations, compatibility concerns, or rollback concerns exist.
 7. Ask how the implementation will prove every requirement and non-goal boundary.
 8. Write `.sdlc/<slug>/plan.md` using the required template.
-9. Show the full plan to the engineer.
-10. Stop for explicit approval before any coding begins.
+9. Review the plan before the engineer sees it, as described below.
+10. Show the full plan to the engineer, with the review findings beside it.
+11. Stop for explicit approval before any coding begins.
+
+## Plan review
+
+Review the plan while changing direction still means editing Markdown. A defect
+caught here costs a paragraph; the same defect caught at Stage 5 costs a commit and
+a review round, and every round an agent author spends is a round nobody spends on
+the next change.
+
+1. Read the reviewer named for Stage 3 in `REVIEW.md`. The default is
+   `codex-plan-review`.
+2. If that reviewer is not installed, fall back to the `sdlc-reviewer` subagent
+   running the `Plan` pass, and record the fallback. Never skip the review because
+   the configured reviewer is missing.
+3. Run the `Plan` pass only. Bugs, Security and Compliance need code and run at
+   Stage 5.
+4. State the budget in the invocation, because an external reviewer has its own
+   loop and will not read this file: the `Plan` pass only, at most three rounds,
+   only what changed since the previous round after round 1, no finding that
+   `review-findings.md` already records, a repeated defect reported once as a
+   class, and findings in the one-line `path:line — Severity — failure — fix` form.
+5. Record each round in `.sdlc/<slug>/review-findings.md` under stage `Plan`.
+6. At the cap, stop reviewing and tell the engineer the approach itself needs
+   rethinking. Three rounds on a Markdown plan means the plan is not the problem.
+7. If the reviewer returns having run more rounds than the budget, record the real
+   number. The count is evidence about the review, and quietly writing down the
+   budget instead of what happened makes the round metrics worthless.
+
+An external reviewer may debate to its own conclusion rather than to this budget —
+`codex-plan-review`, for one, is documented to run until it approves or deadlocks,
+with no round cap of its own. Passing the budget in the invocation is then a request,
+not a limit. Where the cost of that matters more than the extra depth, name
+`sdlc-reviewer` for Stage 3 in `REVIEW.md`: it honours the cap because this skill
+drives its rounds.
+
+Fix what the review finds before showing the plan, or record why a finding was not
+acted on. The engineer approves the plan and its findings together.
+
+Pay particular attention to `Files that change`. The artifact gate admits source
+writes from that list: a missing entry blocks the implementation mid-flight, and an
+over-broad entry widens what the gate will admit.
 
 ## Required artifact
 

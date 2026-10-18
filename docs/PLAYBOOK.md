@@ -26,11 +26,14 @@ flowchart LR
 
 The diagram is a loop, not a promise that every change takes the same route. A low-risk documentation correction may enter at Build. A production anomaly may enter at Maintain and create a new Plan artifact. A high-risk design may cycle between Plan and Design several times.
 
-The invariant is that no stage invents acceptance on behalf of the next gate owner.
+Entering at Build is the **fast path**, and it has a shape. A person declares the change low-risk; the agent checks that declaration against the sensitive-path list in `REVIEW.md` and refuses it when the change reaches one; the declaration and that result are recorded in `plan.md`. The change then skips Stage 1 and Stage 2 and nothing else — plan review, implementation, verification, the Stage 5 passes, and a human approval all still happen. The artifact gate enforces the refusal rather than trusting the declaration, and Stage 5 re-checks the real diff, because a declared file list is a claim about work not yet done.
+
+The invariant is that no stage invents acceptance on behalf of the next gate owner. The fast path does not weaken it: it removes stages whose gate owner has nothing to decide, never a gate.
 
 Each stage is executed by one skill in the `ai-sdlc` plugin: `sdlc-plan`, `sdlc-design`,
 `sdlc-build`, `sdlc-test`, `sdlc-deploy`, `sdlc-maintain`. Two subagents serve them —
-`sdlc-reviewer` for the Stage 5 review passes, `sdlc-diagnostician` for Stage 6 breach
+`sdlc-reviewer` for the Stage 3 plan review, the Stage 5 review passes, and the verifier
+that judges a finding before it is posted; `sdlc-diagnostician` for Stage 6 breach
 diagnosis. The rest of this document describes the method; the skills are how it runs.
 
 ## Operating rules
@@ -45,6 +48,10 @@ diagnosis. The rest of this document describes the method; the skills are how it
 8. Attach tool output as evidence; do not replace it with a claim that checks passed.
 9. Update the plan when implementation departs from it.
 10. Feed escaped defects and incidents back into tests, evals, or instructions.
+11. Review the plan before the code, where changing direction costs a paragraph.
+12. Cap the review rounds. Repeated rounds mean the approach is wrong, not that the review is working.
+13. Fix a repeated finding at its source, so the third occurrence cannot happen.
+14. Review the reviewer: its policy is configuration, and escaped defects are its eval set.
 
 ## Where files live
 
@@ -54,7 +61,21 @@ Per-change artifacts live together:
 .sdlc/<slug>/
 ├── intent.md
 ├── spec.md
-└── plan.md
+├── plan.md
+└── review-findings.md
+```
+
+`review-findings.md` is the review's memory across rounds: which round this is, the SHA each round reviewed, every finding already posted, the pre-existing defects awaiting a human decision, and the finding classes that have now recurred. Without it a reviewer re-reads the whole change every round and reports what it reported last time.
+
+A fast-path change has `plan.md` and `review-findings.md` but no `intent.md` or `spec.md`, and `plan.md` carries a `## Fast path` section recording who declared it low-risk and the result of the sensitive-path check.
+
+Evals that protect the reviewer itself live once per repository, not per change:
+
+```text
+.sdlc/evals/reviewer/
+├── proposed/
+├── confirmed/
+└── clean/
 ```
 
 `<slug>` is a stable, short, lowercase, hyphenated change identifier. Do not reuse a slug for an unrelated change.
@@ -260,7 +281,9 @@ Build chooses a concrete implementation route before editing the repository.
 
 The written plan makes file scope, sequencing, risks, proof, and possible parallel work visible to reviewers.
 
-Planning first keeps architecture review at the point where changing direction means editing Markdown rather than reverting code.
+Planning first keeps architecture review at the point where changing direction means editing Markdown rather than reverting code. So the plan is reviewed there, before the engineer sees it, by the reviewer `REVIEW.md` names for this stage. The same round rules apply as at Stage 5, and three rounds on a Markdown plan means the approach needs rethinking rather than another fix.
+
+A defect caught here costs a paragraph. The same defect caught at Stage 5 costs a commit, a round, and a re-review — and when the author is an agent, a comment a person would answer in seconds instead buys a whole cycle.
 
 After approval, the agent implements the smallest coherent change that satisfies the specification.
 
@@ -430,6 +453,14 @@ An independent review pass examines bugs, security, and compliance against the a
 
 The agent labels findings by pass and severity, cites precise evidence, and avoids repeating deterministic lint output.
 
+A finding is verified before it is posted: a second read-only reviewer, in its own context, sees the finding and the code it cites but not the reasoning that produced it, and answers whether the failure actually happens. It judges reality, never importance.
+
+Rounds are capped and recorded. After the first round the reviewer sees only the new diff, never reports a finding an earlier round posted, and reports a defect appearing at several call sites once, as a class. At the cap it stops reviewing and returns the change to its plan.
+
+A real defect the change did not introduce is reported as pre-existing: it does not block merge and is not counted against the author, but it is always listed so a person decides its fate. A pre-existing security defect is reported at its real severity and blocks like any other.
+
+A finding class that has now appeared in two changes must be encoded — in `CLAUDE.md`, a lint rule, or `REVIEW.md` — before the stage exits. Fixing the instance is not fixing the class.
+
 The implementing agent may address review comments and push fixes through the same checks.
 
 The release agent prepares deployment and rollback commands without acquiring standing production credentials.
@@ -446,53 +477,25 @@ No agent-generated finding, score, or absence of findings counts as human approv
 
 ### Contract artifact: root `REVIEW.md`
 
-The playbook fixes four sections — `Passes`, `What Important means here`, `Cap the nits`,
-`Do not report`. Keep those names; the content under them is yours to tune per project.
-A worked version:
+Anthropic's playbook fixes four sections — `Passes`, `What Important means here`,
+`Cap the nits`, `Do not report`. This implementation adds six that the review loop needs
+in order to converge and to stay enforceable: `Reviewer`, `Depth`, `Sensitive paths`,
+`Rounds`, `Verifier`, and `Fix a repeat at its source`. Keep all ten names; the content
+under them is yours to tune per project.
 
-```markdown
-# Review instructions
+The plugin ships a worked version at `plugins/ai-sdlc/templates/REVIEW.md`, which
+`ai-sdlc-init` copies to the repository root. It is the one authoritative copy: read it
+there rather than from a second transcription that can drift out of date.
 
-## Passes
+Four of those sections carry decisions a project cannot inherit and must make:
 
-Every review runs three independent passes and reports only evidence-backed findings in
-changed code or its immediate behavior.
-
-**Bugs** — behavior that can return the wrong result, lose or corrupt data, break an
-existing supported flow, mishandle retries or concurrency, or leave a failure path unsafe.
-Verify boundaries, defaults, error handling, and compatibility with the accepted spec.
-
-**Security** — missing authorization at a trust boundary, injection, secret exposure,
-unsafe deserialization, insecure cryptography, privilege escalation, sensitive-data
-logging, or an externally reachable denial-of-service path. Treat new dependencies and
-public endpoints as security-relevant.
-
-**Compliance** — violations of declared data classification, consent, retention, audit
-logging, access-control, accessibility, or regulatory controls. If no project rule
-applies, state that this pass found no applicable requirement rather than inventing one.
-
-## What Important means here
-
-**Important** means a realistic production failure affecting correctness, security,
-compliance, availability, or customer data. It blocks merge until fixed or explicitly
-accepted by the responsible human.
-
-**Minor** means a bounded issue that should be fixed before release when practical.
-
-**Nit** means a non-blocking clarity improvement.
-
-## Cap the nits
-
-Report at most five Nits. Important findings are never counted against this cap and are
-never suppressed by it. A review that returns two Important findings and no Nits is a
-better review than one that returns twenty entries.
-
-## Do not report
-
-Generated code. Vendored dependencies. Formatting that the configured formatter or linter
-already owns. Subjective style preferences with no correctness, security, compliance, or
-maintenance consequence.
-```
+- `Reviewer` names which reviewer runs at Stage 3 and at Stage 5, and what happens when
+  the configured one is not installed. The fallback is always a review, never a skip.
+- `Depth` sets how much review a change gets. Security never shrinks with depth.
+- `Sensitive paths` is the machine-checkable list of what can never be low-risk. It
+  includes `REVIEW.md` itself, so the list cannot be emptied on the fast path.
+- `Rounds` sets the cap and the convergence rules: diff-only after the first round, no
+  finding reported twice, a repeated defect reported once as a class.
 
 The pull request, check runs, review findings, fixes, approvals, release authorization, and deployment log form the Deploy artifact.
 
