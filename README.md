@@ -174,7 +174,7 @@ In a repository that has opted in, expect the gates to actually stop you. That i
 
 Each block message names the rule that matched and the escape hatch, so a blocked action is never a mystery.
 
-## Quickstart
+## Usage
 
 From the repository you want to run the lifecycle in:
 
