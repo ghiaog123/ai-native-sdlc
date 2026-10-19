@@ -6,6 +6,7 @@
 ![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-black)
 ![Codex plugin](https://img.shields.io/badge/Codex-plugin-black)
 ![Stages](https://img.shields.io/badge/stages-6-black)
+[![HOL Registry](https://img.shields.io/endpoint?url=https%3A%2F%2Fhol.org%2Fapi%2Fregistry%2Fbadges%2Fplugin%3Fslug%3Dghiaog123%252Fai-native-sdlc%26metric%3Dtrust)](https://hol.org/plugins/ghiaog123%2Fai-native-sdlc)
 
 ![A terminal session. A plan.md declares a typo fix low-risk on the fast path and lists README.md as the only file it changes. The artifact gate admits a write to README.md with exit 0, then blocks a write to REVIEW.md with exit 2, because a fast-path change cannot reach a path listed under Sensitive paths.](docs/demo.gif)
 
