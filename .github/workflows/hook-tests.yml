@@ -1,0 +1,24 @@
+name: Hook tests
+
+on:
+  pull_request:
+    paths:
+      - "plugins/ai-sdlc/hooks/**"
+      - ".github/workflows/hook-tests.yml"
+  push:
+    branches: [main]
+    paths:
+      - "plugins/ai-sdlc/hooks/**"
+      - ".github/workflows/hook-tests.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  hooks:
+    name: Gate and state hooks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash plugins/ai-sdlc/hooks/test-artifact-gate.sh
+      - run: bash plugins/ai-sdlc/hooks/test-sdlc-state.sh
