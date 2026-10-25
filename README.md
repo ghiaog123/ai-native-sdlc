@@ -142,10 +142,10 @@ Codex reads `plugins/ai-sdlc/.codex-plugin/plugin.json`, which points at the sam
 `skills/`, the same hook scripts through `hooks/hooks.codex.json`, and the `agents/*.toml`
 subagent definitions. Nothing needs converting.
 
-One difference matters. **Codex requires a one-time trust grant before plugin hooks run,
-and only the interactive Codex TUI can give it.** Until you grant it there, the plugin's
-skills and subagents work but the gates are advisory — the enforcement layer is off. Check
-the plugin's hook state in the Codex TUI plugin menu after installing. Do not reach for
+One difference matters. **Codex requires explicit trust before plugin hooks run,
+granted through `/hooks` in the interactive Codex CLI.** Until you grant it there, the plugin's
+skills and subagents work but the gates are advisory — the enforcement layer is off. Review
+the hook state after installing or updating; changed hook definitions require re-approval. Do not reach for
 `--dangerously-bypass-hook-trust` to skip this; the trust prompt is the thing that makes a
 hook safe to run.
 
