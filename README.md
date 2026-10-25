@@ -1,6 +1,6 @@
-# AI-Native SDLC — Anthropic Playbook
+# AI-Native SDLC — Claude Code and Codex plugin
 
-**An AI-native software development lifecycle you can actually run** — six stages, one committed Markdown artifact per stage, and a human approval gate at every handoff. Packaged as a [Claude Code](https://claude.com/product/claude-code) plugin, this repository turns [Anthropic's AI-Native SDLC playbook](https://claude.com/blog/the-ai-native-sdlc-playbook) into something a team installs, not just something they read.
+**An AI-native software development lifecycle you can actually run** — six stages, committed Markdown artifacts, and a human approval gate at every handoff. This independent community implementation packages [Anthropic's AI-Native SDLC playbook](https://claude.com/blog/the-ai-native-sdlc-playbook) as a plugin for [Claude Code](https://claude.com/product/claude-code) and Codex.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-black.svg)](LICENSE)
 ![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-black)
@@ -12,9 +12,11 @@
 
 A person called that change low-risk, so it skipped the intent and spec stages. Then the agent reached for `REVIEW.md` — the file that defines what it may touch — and a hook stopped it. That is the whole idea: **a declaration buys fewer stages, never fewer boundaries.**
 
-Reproduce it in a throwaway repository, no plugin install needed:
+Reproduce it in a throwaway repository from a clone of this project; no plugin install needed:
 
 ```bash
+git clone https://github.com/ghiaog123/ai-native-sdlc.git
+cd ai-native-sdlc
 export GATE="$PWD/plugins/ai-sdlc/hooks/artifact-gate.sh"
 source docs/demo-setup.sh
 gate README.md    # exit 0
@@ -63,6 +65,8 @@ Review rounds are capped at three and recorded in `.sdlc/<slug>/review-findings.
 Works on **Claude Code** and **Codex**. Both read the same plugin directory — the six
 stage skills, the hooks, and the artifact templates are shared; only the manifest and the
 subagent format differ, and both are shipped.
+
+The latest [tagged GitHub release](https://github.com/ghiaog123/ai-native-sdlc/releases/tag/v0.1.2) is **v0.1.2**; the Claude Code and Codex plugin manifests on `main` declare **v0.1.3**.
 
 A marketplace source can be a GitHub repo, a URL, or a local path, so a clone installs
 the same way the published repo does.
@@ -225,7 +229,7 @@ Stage state is **derived**, never stored — it is computed from which artifacts
 | Production command guard | Best-effort | No | No | No |
 | Control-band monitoring that files the next intent | Yes | No | No | No |
 | Agent-configuration evals | Yes | No | No | No |
-| Multi-agent tool support | Claude Code | 30+ agents | Model-agnostic | Model-agnostic |
+| Multi-agent tool support | Claude Code and Codex | 30+ agents | Model-agnostic | Model-agnostic |
 
 Spec-driven development tools are mature for the front half of the lifecycle. This repository exists because the back half — verification, review policy, release authorization, and production feedback — is where the playbook's real claims live, and it is the part almost nothing implements.
 
