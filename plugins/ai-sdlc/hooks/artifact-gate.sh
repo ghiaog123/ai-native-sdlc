@@ -3,37 +3,79 @@ set -euo pipefail
 
 # PreToolUse hook: require a committed plan before source-code writes.
 PAYLOAD="$(cat || true)"
-TARGET_PATH="$(printf '%s' "$PAYLOAD" | python3 -c '
-import json, sys
-try:
-    data = json.load(sys.stdin)
-except Exception:
-    raise SystemExit(0)
-obj = data.get("tool_input", data)
-for key in ("file_path", "path", "target_path"):
-    value = obj.get(key) if isinstance(obj, dict) else None
-    if isinstance(value, str):
-        print(value)
-        break
-' 2>/dev/null || true)"
-
-# An unknown payload must never block work.
-[[ -n "$TARGET_PATH" ]] || exit 0
-
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 [[ -d "$ROOT/.sdlc" ]] || exit 0
 [[ -e "$ROOT/.sdlc/OPTOUT" ]] && exit 0
 
-# Normalize the target path: resolve relative to repo root, collapse . and ..
-NORMALIZED="$(python3 -c "
+if ! TARGET_PATHS="$(printf '%s' "$PAYLOAD" | python3 -c '
+import json, os, sys
+try:
+    data = json.load(sys.stdin)
+except Exception:
+    raise SystemExit(0)
+if not isinstance(data, dict):
+    raise SystemExit(0)
+obj = data.get("tool_input", data)
+name = data.get("tool_name")
+if not isinstance(obj, dict):
+    raise SystemExit(2 if name == "apply_patch" else 0)
+command = obj.get("command")
+if name == "apply_patch" or (isinstance(command, str) and command.startswith("*** Begin Patch")):
+    if not isinstance(command, str):
+        raise SystemExit(2)
+    lines = command.splitlines()
+    if len(lines) < 3 or lines[0] != "*** Begin Patch" or lines[-1] != "*** End Patch":
+        raise SystemExit(2)
+    paths, operation, moved = [], None, False
+    for line in lines[1:-1]:
+        if line.startswith("*** "):
+            if line.startswith(("*** Add File: ", "*** Update File: ", "*** Delete File: ")):
+                operation, path = line[4:].split(": ", 1)
+                if not path.strip():
+                    raise SystemExit(2)
+                paths.append(path)
+                moved = False
+            elif line.startswith("*** Move to: ") and operation == "Update File" and not moved:
+                path = line[len("*** Move to: "):]
+                if not path.strip():
+                    raise SystemExit(2)
+                paths.append(path)
+                moved = True
+            elif line != "*** End of File" or operation != "Update File":
+                raise SystemExit(2)
+        elif operation is None:
+            raise SystemExit(2)
+    if not paths:
+        raise SystemExit(2)
+    cwd = data.get("cwd")
+    if not isinstance(cwd, str) or not os.path.isabs(cwd):
+        cwd = os.getcwd()
+    print("\n".join(path if os.path.isabs(path) else os.path.join(cwd, path) for path in paths))
+    raise SystemExit(0)
+for key in ("file_path", "path", "target_path"):
+    value = obj.get(key)
+    if isinstance(value, str):
+        print(value)
+        break
+' 2>/dev/null)"; then
+    echo "AI SDLC artifact gate: blocked malformed apply_patch payload." >&2
+    exit 2
+fi
+
+# Unknown non-patch payloads never block work.
+[[ -n "$TARGET_PATHS" ]] || exit 0
+
+# Normalize the target path: resolve relative to repo root and follow symlinks.
+normalize_path() {
+    python3 -c "
 import os, sys
 path = sys.argv[1]
-root = sys.argv[2]
+root = os.path.realpath(sys.argv[2])
 # Make absolute if relative
 if not os.path.isabs(path):
     path = os.path.join(root, path)
-# Normalize to collapse . and ..
-path = os.path.normpath(path)
+# Resolve symlinks as well as . and .. before comparing with repo-relative plans.
+path = os.path.realpath(path)
 # Ensure it stays within repo
 try:
     rel = os.path.relpath(path, root)
@@ -43,7 +85,8 @@ try:
         print(rel)
 except:
     print(path)
-" "$TARGET_PATH" "$ROOT" 2>/dev/null || echo "$TARGET_PATH")"
+" "$1" "$ROOT" 2>/dev/null || printf '%s\n' "$1"
+}
 
 # Files protected by governance that always require a plan, even if they match
 # the general exemptions. The gate exists to prevent unauthorized changes to:
@@ -244,12 +287,12 @@ SENSITIVE_PATTERNS="$(review_sensitive_patterns)"
 # each one says about this path. Never break: with two plans in flight, breaking makes
 # the verdict depend on glob order.
 shopt -s nullglob
-active_plan_found=0
-path_matches_plan=0
-section_missing_in_active=0
-fast_path_active=0
-ordinary_plan_covers_path=0
-fast_path_slug=""
+check_path() {
+local NORMALIZED
+NORMALIZED="$(normalize_path "$1")"
+local active_plan_found=0 path_matches_plan=0 section_missing_in_active=0
+local fast_path_active=0 ordinary_plan_covers_path=0 fast_path_slug=""
+local plan_path plan_rel slug_dir slug is_finished marker result sanitized
 
 for plan_path in "$ROOT"/.sdlc/*/plan.md; do
     plan_rel="${plan_path#"$ROOT"/}"
@@ -308,34 +351,39 @@ if [[ "$fast_path_active" == 1 ]] && is_sensitive "$NORMALIZED" \
    && [[ "$ordinary_plan_covers_path" == 0 ]]; then
     sanitized="$(sanitize_path "$NORMALIZED")"
     echo "AI SDLC artifact gate: blocked write to sensitive path $sanitized; .sdlc/$fast_path_slug/plan.md declares '## Fast path', which cannot cover a path listed in REVIEW.md 'Sensitive paths' or in the built-in governance list. Route this change through sdlc-plan." >&2
-    exit 2
+    return 2
 fi
 
 # If not protected, check against exemption list
 if ! is_protected "$NORMALIZED"; then
     if is_exempt "$NORMALIZED"; then
-        exit 0
+        return 0
     fi
 fi
 
 # Allow if we found an active plan that lists this path
 if [[ "$path_matches_plan" == 1 ]]; then
-    exit 0
+    return 0
 fi
 
 # Allow if we found an active plan with no "Files that change" section
 if [[ "$section_missing_in_active" == 1 ]]; then
-    exit 0
+    return 0
 fi
 
 # Block if no active plan exists (gate re-arms when all are finished)
 if [[ "$active_plan_found" == 0 ]]; then
     sanitized="$(sanitize_path "$NORMALIZED")"
     echo "AI SDLC artifact gate: blocked source-code write to $sanitized; create and commit .sdlc/<change>/plan.md first (or add .sdlc/OPTOUT)." >&2
-    exit 2
+    return 2
 fi
 
 # Block: active plan exists but target path is not listed and section does exist
 sanitized="$(sanitize_path "$NORMALIZED")"
 echo "AI SDLC artifact gate: blocked source-code write to $sanitized; add the file to your active plan's '## Files that change' section and re-commit." >&2
-exit 2
+return 2
+}
+
+while IFS= read -r TARGET_PATH; do
+    check_path "$TARGET_PATH" || exit 2
+done <<< "$TARGET_PATHS"

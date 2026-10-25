@@ -66,7 +66,7 @@ Works on **Claude Code** and **Codex**. Both read the same plugin directory — 
 stage skills, the hooks, and the artifact templates are shared; only the manifest and the
 subagent format differ, and both are shipped.
 
-The latest [tagged GitHub release](https://github.com/ghiaog123/ai-native-sdlc/releases/tag/v0.1.2) is **v0.1.2**; the Claude Code and Codex plugin manifests on `main` declare **v0.1.3**.
+Both runtime manifests use the same plugin version. The install commands below follow the marketplace source; tagged snapshots and version-specific changes are available on [GitHub Releases](https://github.com/ghiaog123/ai-native-sdlc/releases).
 
 A marketplace source can be a GitHub repo, a URL, or a local path, so a clone installs
 the same way the published repo does.
